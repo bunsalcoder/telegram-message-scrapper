@@ -2,6 +2,10 @@ import asyncio
 import os
 from telethon import TelegramClient, events
 from telethon.tl.types import MessageEntityTextUrl
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # API credentials from .env
 API_ID = int(os.getenv("API_ID"))  # Convert to integer
