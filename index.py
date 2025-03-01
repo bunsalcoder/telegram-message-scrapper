@@ -1,4 +1,3 @@
-import asyncio
 import os
 from telethon import TelegramClient, events
 from telethon.tl.types import MessageEntityTextUrl
