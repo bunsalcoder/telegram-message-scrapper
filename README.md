@@ -34,13 +34,14 @@ A Python-based Telegram bot that listens to messages from a source channel and f
    BOT_TOKEN=your_bot_token
    DESTINATION_GROUP_ID=-100xxxxxxxxxx  # Your target group ID
    SOURCE_CHANNEL_ID=-100xxxxxxxxxx  # Your source channel ID
+   PHONE_NUMBER=+855xxxxxxx # Phone number with country code
    ```
 
 ## 🔧 Usage
 
 Run the bot:
 ```sh
-python src/index.py
+python3 src/index.py
 ```
 
 ## 📜 How It Works
