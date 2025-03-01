@@ -41,7 +41,7 @@ A Python-based Telegram bot that listens to messages from a source channel and f
 
 Run the bot:
 ```sh
-python3 src/index.py
+python3 index.py
 ```
 
 ## 📜 How It Works
