@@ -10,7 +10,7 @@ load_dotenv()
 API_ID = int(os.getenv("API_ID"))  # Convert to integer
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-DESTINATION_GROUP_ID = int(os.getenv("DESTINATION_GROUP_ID"))
+DESTINATION_GROUP_IDS = [int(id) for id in os.getenv("DESTINATION_GROUP_IDS").split(",")]
 SOURCE_CHANNEL_ID = int(os.getenv("SOURCE_CHANNEL_ID"))
 
 # Initialize a client
@@ -30,7 +30,6 @@ def apply_entities_to_message(text, entities):
     # Convert the text to UTF-16 to handle offsets correctly
     utf16_text = text.encode('utf-16-le')
     result = []
-    prev_end = 0
 
     # Sort entities by offset in reverse order to avoid overlapping issues
     sorted_entities = sorted(entities, key=lambda x: x.offset, reverse=True)
@@ -74,30 +73,31 @@ async def handler(event):
         # Reconstruct the message with proper hyperlinks
         formatted_message = apply_entities_to_message(message_text, entities)
 
-        # Send media or text as a new message
-        if media:
-            try:
-                # Download and send media
-                file_path = await client.download_media(media)
-                await bot_client.send_file(
-                    DESTINATION_GROUP_ID,
-                    file_path,
-                    caption=formatted_message,
+        # Send media or text to each destination group
+        for dest_id in DESTINATION_GROUP_IDS:
+            if media:
+                try:
+                    # Download and send media
+                    file_path = await client.download_media(media)
+                    await bot_client.send_file(
+                        dest_id,
+                        file_path,
+                        caption=formatted_message,
+                        parse_mode='html'  # Use HTML parsing to allow clickable links
+                    )
+                except Exception as e:
+                    print(f"Error downloading or sending media to {dest_id}: {e}")
+                finally:
+                    # Clean up the downloaded file
+                    if file_path and os.path.exists(file_path):
+                        os.remove(file_path)
+                        print(f"Deleted temporary file: {file_path}")
+            else:
+                await bot_client.send_message(
+                    dest_id,
+                    formatted_message,
                     parse_mode='html'  # Use HTML parsing to allow clickable links
                 )
-            except Exception as e:
-                print(f"Error downloading or sending media: {e}")
-            finally:
-                # Clean up the downloaded file
-                if file_path and os.path.exists(file_path):
-                    os.remove(file_path)
-                    print(f"Deleted temporary file: {file_path}")
-        else:
-            await bot_client.send_message(
-                DESTINATION_GROUP_ID,
-                formatted_message,
-                parse_mode='html'  # Use HTML parsing to allow clickable links
-            )
 
     except Exception as e:
         print(f"Error sending message: {e}")
