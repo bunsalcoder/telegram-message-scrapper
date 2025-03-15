@@ -102,21 +102,30 @@ def apply_entities_to_message(text, entities):
 async def send_with_retry(client, dest_id, message, media=None, retries=3, delay=5):
     """
     Sends a message with retry logic in case of failures.
+    Removes the downloaded media file after sending or if sending fails.
     """
-    for attempt in range(retries):
-        try:
-            if media:
-                file_path = await client.download_media(media)
-                await client.send_file(dest_id, file_path, caption=message, parse_mode='html')
-            else:
-                await client.send_message(dest_id, message, parse_mode='html')
-            break  # Success, exit the retry loop
-        except Exception as e:
-            logger.error(f"Attempt {attempt + 1} failed for destination {dest_id}: {e}")
-            if attempt < retries - 1:
-                await asyncio.sleep(delay)
-            else:
-                logger.error(f"Failed to send message to {dest_id} after {retries} attempts.")
+    file_path = None
+    try:
+        if media:
+            file_path = await client.download_media(media)
+            for attempt in range(retries):
+                try:
+                    await client.send_file(dest_id, file_path, caption=message, parse_mode='html')
+                    break  # Success, exit the retry loop
+                except Exception as e:
+                    logger.error(f"Attempt {attempt + 1} failed for destination {dest_id}: {e}")
+                    if attempt < retries - 1:
+                        await asyncio.sleep(delay)
+                    else:
+                        logger.error(f"Failed to send message to {dest_id} after {retries} attempts.")
+        else:
+            await client.send_message(dest_id, message, parse_mode='html')
+    except Exception as e:
+        logger.error(f"Error sending message to {dest_id}: {e}")
+    finally:
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+            logger.info(f"Removed media file: {file_path}")
 
 @client.on(events.NewMessage(chats=SOURCE_CHANNEL_ID))  # Source group or channel ID
 async def handler(event):
